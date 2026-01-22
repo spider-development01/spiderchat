@@ -177,3 +177,100 @@ video { width: 100%; border-radius: 8px; border: 1px solid var(--border); backgr
     .sidebar { width: 100%; height: 150px; flex-direction: row; overflow-x: auto; }
     .video-grid { grid-template-columns: 1fr; }
 }
+
+/* Update/Add these styles */
+
+.auth-container {
+    width: 380px;
+    padding: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.auth-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    background: rgba(0,0,0,0.2);
+}
+
+.tab-btn {
+    flex: 1;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text);
+    padding: 15px;
+    font-size: 0.9rem;
+    opacity: 0.6;
+    border-radius: 0;
+    margin: 0;
+}
+
+.tab-btn:hover {
+    background: rgba(255,255,255,0.05);
+    box-shadow: none;
+    color: var(--primary);
+}
+
+.tab-btn.active {
+    opacity: 1;
+    border-bottom: 2px solid var(--primary);
+    background: rgba(122, 162, 247, 0.1);
+    color: var(--primary);
+    text-shadow: 0 0 10px var(--primary);
+}
+
+.auth-form {
+    padding: 2rem;
+}
+
+.input-group {
+    margin-bottom: 1rem;
+    text-align: left;
+    transition: all 0.3s ease;
+}
+
+.input-group label {
+    font-size: 0.75rem;
+    color: var(--accent);
+    margin-bottom: 5px;
+    display: block;
+    font-weight: bold;
+}
+
+/* Collapsible Animation for Username */
+#username-container {
+    overflow: hidden;
+    max-height: 100px; /* Approximate height of label + input */
+    opacity: 1;
+}
+
+#username-container.collapsed {
+    max-height: 0;
+    opacity: 0;
+    margin-bottom: 0;
+}
+
+.action-btn {
+    width: 100%;
+    margin-top: 10px;
+    padding: 12px;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+.status-text {
+    margin-top: 15px;
+    font-size: 0.8rem;
+    color: #565f89;
+    min-height: 1.2em;
+}
+
+.blink {
+    animation: blinker 1.5s linear infinite;
+}
+
+@keyframes blinker {
+    50% { opacity: 0.5; }
+}
