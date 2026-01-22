@@ -37,12 +37,13 @@ window.onload = () => {
 };
 
 // --- Constants ---
-const FAKE_DOMAIN = "@rice.local"; // Internal domain for mapping usernames
+// We use a standard looking domain to trick Supabase validation
+const FAKE_DOMAIN = "@rice.com"; 
 
 // --- Auth State ---
 let isLoginMode = true;
 
-// --- Auth UI Logic ---
+// --- Auth UI Logic (Keep this the same as before) ---
 window.switchAuthMode = (mode) => {
     const status = document.getElementById('auth-status');
     const actionBtn = document.getElementById('auth-action-btn');
@@ -66,7 +67,7 @@ window.switchAuthMode = (mode) => {
     }
 };
 
-// --- Auth Backend Logic ---
+// --- Auth Backend Logic (THE FIX) ---
 window.handleAuthAction = async () => {
     const rawUsername = document.getElementById('auth-username').value;
     const password = document.getElementById('password').value;
@@ -79,10 +80,18 @@ window.handleAuthAction = async () => {
         return;
     }
 
-    // 2. Sanitize Username (Remove spaces, lowercase)
-    const cleanUsername = rawUsername.trim().toLowerCase().replace(/\s/g, '');
-    
-    // 3. Construct "Fake" Email for Supabase
+    // 2. Strict Sanitization
+    // Removes spaces, symbols, and converts to lowercase. 
+    // "Cool Guy!" -> "coolguy"
+    const cleanUsername = rawUsername.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+
+    if (cleanUsername.length < 3) {
+        status.innerText = "ERROR: USERNAME TOO SHORT (MIN 3 CHARS)";
+        status.style.color = "var(--danger)";
+        return;
+    }
+
+    // 3. Construct the "Internal" Email
     const email = `${cleanUsername}${FAKE_DOMAIN}`;
 
     status.innerText = "PROCESSING...";
@@ -90,7 +99,7 @@ window.handleAuthAction = async () => {
 
     try {
         if (isLoginMode) {
-            // LOGIN
+            // --- LOGIN ---
             const { data, error } = await supabase.auth.signInWithPassword({ 
                 email: email, 
                 password: password 
@@ -103,13 +112,13 @@ window.handleAuthAction = async () => {
             setTimeout(() => window.location.reload(), 500);
 
         } else {
-            // REGISTER
-            // We store the original 'cleanUsername' in metadata so it displays correctly in the app
+            // --- REGISTER ---
+            // Note: We save the ORIGINAL raw username (with spaces/caps) in metadata for display
             const { data, error } = await supabase.auth.signUp({
                 email: email,
                 password: password,
                 options: { 
-                    data: { username: cleanUsername } 
+                    data: { username: rawUsername } 
                 }
             });
 
@@ -118,17 +127,18 @@ window.handleAuthAction = async () => {
             status.innerText = "NODE CREATED. LOGGING IN...";
             status.style.color = "var(--success)";
             
-            // Auto-login (or reload) usually happens automatically with Supabase session management,
-            // but we can force a reload to trigger the session check.
-            setTimeout(() => window.location.reload(), 1000);
+            // Wait 1.5s then reload to enter app
+            setTimeout(() => window.location.reload(), 1500);
         }
     } catch (err) {
-        // Handle specific error for "User already exists" or "Invalid login"
-        let msg = err.message;
-        if(msg.includes("Invalid login")) msg = "INVALID CREDENTIALS";
-        if(msg.includes("already registered")) msg = "USERNAME TAKEN";
+        let msg = err.message.toUpperCase();
         
-        status.innerText = `ERROR: ${msg.toUpperCase()}`;
+        // Translate common Supabase errors to "Terminal" speak
+        if(msg.includes("INVALID LOGIN")) msg = "INVALID CREDENTIALS";
+        if(msg.includes("ALREADY REGISTERED")) msg = "USERNAME ALREADY TAKEN";
+        if(msg.includes("VALIDATION FAILED")) msg = "INVALID CHARACTERS IN INPUT";
+        
+        status.innerText = `ERROR: ${msg}`;
         status.style.color = "var(--danger)";
     }
 };
