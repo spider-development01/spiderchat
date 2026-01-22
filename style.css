@@ -239,18 +239,6 @@ video { width: 100%; border-radius: 8px; border: 1px solid var(--border); backgr
     font-weight: bold;
 }
 
-/* Collapsible Animation for Username */
-#username-container {
-    overflow: hidden;
-    max-height: 100px; /* Approximate height of label + input */
-    opacity: 1;
-}
-
-#username-container.collapsed {
-    max-height: 0;
-    opacity: 0;
-    margin-bottom: 0;
-}
 
 .action-btn {
     width: 100%;
@@ -273,4 +261,8 @@ video { width: 100%; border-radius: 8px; border: 1px solid var(--border); backgr
 
 @keyframes blinker {
     50% { opacity: 0.5; }
+}
+
+#auth-username {
+    text-transform: lowercase; /* Visual style only */
 }
