@@ -19,6 +19,13 @@
             <span>SECURE_GATEWAY // V.2.0</span>
         </div>
 
+<!-- Login/Register Screen -->
+    <div id="auth-screen" class="glass-panel auth-container">
+        <div class="terminal-header">
+            <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+            <span>SECURE_GATEWAY // V.2.1</span>
+        </div>
+
         <!-- Auth Tabs -->
         <div class="auth-tabs">
             <button id="tab-login" class="tab-btn active" onclick="switchAuthMode('login')">
@@ -31,19 +38,14 @@
 
         <div class="auth-form">
             <div class="input-group">
-                <label>>> IDENTITY (EMAIL)</label>
-                <input type="email" id="email" placeholder="user@net.loc" autocomplete="off">
+                <label>>> CODENAME (USERNAME)</label>
+                <!-- Changed type to text, removed email input -->
+                <input type="text" id="auth-username" placeholder="e.g. NEO_01" autocomplete="off">
             </div>
 
             <div class="input-group">
                 <label>>> PASSCODE</label>
                 <input type="password" id="password" placeholder="******" autocomplete="off">
-            </div>
-
-            <!-- Username is hidden by default (Login mode) -->
-            <div class="input-group collapsed" id="username-container">
-                <label>>> CODENAME</label>
-                <input type="text" id="username" placeholder="Pick a display name" autocomplete="off">
             </div>
 
             <button onclick="handleAuthAction()" id="auth-action-btn" class="action-btn">
