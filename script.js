@@ -36,80 +36,78 @@ window.onload = () => {
     startClock();
 };
 
-// --- Auth Functions ---
-window.handleLogin = async () => {
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) alert('Error: ' + error.message);
-    else window.location.reload();
-};
+// --- Auth State & Logic ---
+let isLoginMode = true; // Default to login
 
-window.handleSignUp = async () => {
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    const username = document.getElementById('username').value;
-    
-    if(!username) return alert("Username required for signup");
+window.switchAuthMode = (mode) => {
+    const status = document.getElementById('auth-status');
+    const usernameContainer = document.getElementById('username-container');
+    const actionBtn = document.getElementById('auth-action-btn');
+    const tabLogin = document.getElementById('tab-login');
+    const tabRegister = document.getElementById('tab-register');
 
-    const { data, error } = await supabase.auth.signUp({
-        email, password, options: { data: { username } }
-    });
-    
-    if (error) alert('Error: ' + error.message);
-    else alert('Check your email for confirmation!');
-};
-
-window.handleLogout = async () => {
-    await supabase.auth.signOut();
-    window.location.reload();
-};
-
-async function checkSession() {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) {
-        currentUser = session.user;
-        document.getElementById('my-username').innerText = 'USER: ' + (session.user.user_metadata.username || 'N/A').toUpperCase();
-        views.auth.classList.add('hidden');
-        views.app.classList.remove('hidden');
-        initApp();
+    if (mode === 'login') {
+        isLoginMode = true;
+        // UI Updates
+        tabLogin.classList.add('active');
+        tabRegister.classList.remove('active');
+        usernameContainer.classList.add('collapsed'); // Hide Username
+        actionBtn.innerHTML = ':: INITIALIZE_SESSION';
+        status.innerText = "MODE: AUTHENTICATION";
+        status.style.color = "var(--primary)";
+    } else {
+        isLoginMode = false;
+        // UI Updates
+        tabRegister.classList.add('active');
+        tabLogin.classList.remove('active');
+        usernameContainer.classList.remove('collapsed'); // Show Username
+        actionBtn.innerHTML = ':: CREATE_NEW_NODE';
+        status.innerText = "MODE: REGISTRATION";
+        status.style.color = "var(--success)";
     }
-}
+};
 
-// --- App Logic ---
-async function initApp() {
-    loadUsers();
-    setupRealtime();
-    setupSignaling();
-}
+window.handleAuthAction = async () => {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const status = document.getElementById('auth-status');
 
-async function loadUsers() {
-    // In a real app, only show other users. For now, fetch all profiles.
-    const { data: profiles } = await supabase.from('profiles').select('*').neq('id', currentUser.id);
-    const list = document.getElementById('user-list');
-    list.innerHTML = '';
-    
-    profiles.forEach(p => {
-        const li = document.createElement('li');
-        li.innerText = `> ${p.username}`;
-        li.onclick = () => selectUser(p);
-        list.appendChild(li);
-    });
-}
+    status.innerText = "PROCESSING...";
+    status.classList.remove('blink');
 
-function selectUser(user) {
-    currentChatPartner = user;
-    document.getElementById('chat-with').innerText = `CONNECTED TO: ${user.username.toUpperCase()}`;
-    document.querySelectorAll('#user-list li').forEach(l => l.classList.remove('active'));
-    event.target.classList.add('active');
-    
-    document.getElementById('msg-input').disabled = false;
-    document.getElementById('send-btn').disabled = false;
-    document.getElementById('call-controls').classList.remove('hidden');
-    
-    loadMessages();
-}
+    if (isLoginMode) {
+        // --- LOGIN LOGIC ---
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) {
+            status.innerText = `ERROR: ${error.message}`;
+            status.style.color = "var(--danger)";
+        } else {
+            status.innerText = "ACCESS GRANTED.";
+            status.style.color = "var(--success)";
+            setTimeout(() => window.location.reload(), 1000);
+        }
+    } else {
+        // --- REGISTER LOGIC ---
+        const username = document.getElementById('username').value;
+        if (!username) {
+            status.innerText = "ERROR: CODENAME REQUIRED";
+            status.style.color = "var(--danger)";
+            return;
+        }
+
+        const { data, error } = await supabase.auth.signUp({
+            email, password, options: { data: { username } }
+        });
+
+        if (error) {
+            status.innerText = `ERROR: ${error.message}`;
+            status.style.color = "var(--danger)";
+        } else {
+            status.innerText = "REGISTRATION SUCCESS. CHECK EMAIL.";
+            status.style.color = "var(--success)";
+        }
+    }
+};
 
 // --- Messaging ---
 async function loadMessages() {
