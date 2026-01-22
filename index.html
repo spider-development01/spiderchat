@@ -1,2 +1,93 @@
-hi
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RiceChat // Term-01</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
 
+    <!-- Login Screen -->
+    <div id="auth-screen" class="glass-panel">
+        <div class="terminal-header">
+            <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+            <span>AUTH_PROTOCOL_V1</span>
+        </div>
+        <h1>>> SYSTEM LOGIN_</h1>
+        <input type="email" id="email" placeholder="USER@NET.LOC" autocomplete="off">
+        <input type="password" id="password" placeholder="PASSCODE" autocomplete="off">
+        <input type="text" id="username" placeholder="CODENAME (Sign Up Only)" autocomplete="off">
+        <div class="auth-btns">
+            <button onclick="handleLogin()">:: CONNECT</button>
+            <button onclick="handleSignUp()">:: REGISTER</button>
+        </div>
+        <div id="auth-status" class="status-text">WAITING FOR INPUT...</div>
+    </div>
+
+    <!-- Main App -->
+    <div id="app-container" class="hidden">
+        
+        <!-- Sidebar -->
+        <aside class="glass-panel sidebar">
+            <div class="widget-clock">
+                <h2 id="clock">00:00:00</h2>
+                <small id="date">YYYY-MM-DD</small>
+            </div>
+            
+            <div class="user-list-container">
+                <h3>>> ONLINE NODES</h3>
+                <ul id="user-list">
+                    <!-- Users injected here -->
+                </ul>
+            </div>
+            
+            <div class="my-profile">
+                <span id="my-username">UNKNOWN</span>
+                <button onclick="handleLogout()" class="icon-btn"><i class="ph ph-sign-out"></i></button>
+            </div>
+        </aside>
+
+        <!-- Chat Area -->
+        <main class="glass-panel chat-interface">
+            <div class="chat-header">
+                <span id="chat-with">SELECT A NODE</span>
+                <div class="header-controls hidden" id="call-controls">
+                    <button onclick="startCall('audio')" class="icon-btn"><i class="ph ph-phone"></i></button>
+                    <button onclick="startCall('video')" class="icon-btn"><i class="ph ph-video-camera"></i></button>
+                </div>
+            </div>
+            
+            <div id="messages-area" class="messages-area">
+                <!-- Messages injected here -->
+            </div>
+
+            <div class="chat-input-area">
+                <input type="text" id="msg-input" placeholder="Enter command..." disabled>
+                <button onclick="sendMessage()" id="send-btn" disabled><i class="ph ph-paper-plane-right"></i></button>
+            </div>
+        </main>
+    </div>
+
+    <!-- Call Modal / Overlay -->
+    <div id="call-modal" class="glass-overlay hidden">
+        <div class="glass-panel call-box">
+            <h2 id="call-status">INCOMING TRANSMISSION...</h2>
+            <div class="video-grid">
+                <video id="local-video" autoplay muted playsinline></video>
+                <video id="remote-video" autoplay playsinline></video>
+            </div>
+            <div class="call-actions">
+                <button id="accept-btn" class="green-glow hidden"><i class="ph ph-phone"></i> ACCEPT</button>
+                <button onclick="endCall()" class="red-glow"><i class="ph ph-phone-slash"></i> TERMINATE</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="script.js"></script>
+</body>
+</html>
