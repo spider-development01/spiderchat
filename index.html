@@ -12,23 +12,47 @@
 </head>
 <body>
 
-    <!-- Login Screen -->
-    <div id="auth-screen" class="glass-panel">
+<!-- Login Screen -->
+    <div id="auth-screen" class="glass-panel auth-container">
         <div class="terminal-header">
             <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
-            <span>AUTH_PROTOCOL_V1</span>
+            <span>SECURE_GATEWAY // V.2.0</span>
         </div>
-        <h1>>> SYSTEM LOGIN_</h1>
-        <input type="email" id="email" placeholder="USER@NET.LOC" autocomplete="off">
-        <input type="password" id="password" placeholder="PASSCODE" autocomplete="off">
-        <input type="text" id="username" placeholder="CODENAME (Sign Up Only)" autocomplete="off">
-        <div class="auth-btns">
-            <button onclick="handleLogin()">:: CONNECT</button>
-            <button onclick="handleSignUp()">:: REGISTER</button>
-        </div>
-        <div id="auth-status" class="status-text">WAITING FOR INPUT...</div>
-    </div>
 
+        <!-- Auth Tabs -->
+        <div class="auth-tabs">
+            <button id="tab-login" class="tab-btn active" onclick="switchAuthMode('login')">
+                <i class="ph ph-sign-in"></i> LOGIN
+            </button>
+            <button id="tab-register" class="tab-btn" onclick="switchAuthMode('register')">
+                <i class="ph ph-user-plus"></i> REGISTER
+            </button>
+        </div>
+
+        <div class="auth-form">
+            <div class="input-group">
+                <label>>> IDENTITY (EMAIL)</label>
+                <input type="email" id="email" placeholder="user@net.loc" autocomplete="off">
+            </div>
+
+            <div class="input-group">
+                <label>>> PASSCODE</label>
+                <input type="password" id="password" placeholder="******" autocomplete="off">
+            </div>
+
+            <!-- Username is hidden by default (Login mode) -->
+            <div class="input-group collapsed" id="username-container">
+                <label>>> CODENAME</label>
+                <input type="text" id="username" placeholder="Pick a display name" autocomplete="off">
+            </div>
+
+            <button onclick="handleAuthAction()" id="auth-action-btn" class="action-btn">
+                :: INITIALIZE_SESSION
+            </button>
+            
+            <div id="auth-status" class="status-text blink">WAITING FOR INPUT...</div>
+        </div>
+    </div>
     <!-- Main App -->
     <div id="app-container" class="hidden">
         
