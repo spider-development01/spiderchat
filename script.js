@@ -36,76 +36,100 @@ window.onload = () => {
     startClock();
 };
 
-// --- Auth State & Logic ---
-let isLoginMode = true; // Default to login
+// --- Constants ---
+const FAKE_DOMAIN = "@rice.local"; // Internal domain for mapping usernames
 
+// --- Auth State ---
+let isLoginMode = true;
+
+// --- Auth UI Logic ---
 window.switchAuthMode = (mode) => {
     const status = document.getElementById('auth-status');
-    const usernameContainer = document.getElementById('username-container');
     const actionBtn = document.getElementById('auth-action-btn');
     const tabLogin = document.getElementById('tab-login');
     const tabRegister = document.getElementById('tab-register');
 
     if (mode === 'login') {
         isLoginMode = true;
-        // UI Updates
         tabLogin.classList.add('active');
         tabRegister.classList.remove('active');
-        usernameContainer.classList.add('collapsed'); // Hide Username
         actionBtn.innerHTML = ':: INITIALIZE_SESSION';
         status.innerText = "MODE: AUTHENTICATION";
         status.style.color = "var(--primary)";
     } else {
         isLoginMode = false;
-        // UI Updates
         tabRegister.classList.add('active');
         tabLogin.classList.remove('active');
-        usernameContainer.classList.remove('collapsed'); // Show Username
         actionBtn.innerHTML = ':: CREATE_NEW_NODE';
         status.innerText = "MODE: REGISTRATION";
         status.style.color = "var(--success)";
     }
 };
 
+// --- Auth Backend Logic ---
 window.handleAuthAction = async () => {
-    const email = document.getElementById('email').value;
+    const rawUsername = document.getElementById('auth-username').value;
     const password = document.getElementById('password').value;
     const status = document.getElementById('auth-status');
+
+    // 1. Validation
+    if (!rawUsername || !password) {
+        status.innerText = "ERROR: FIELDS_EMPTY";
+        status.style.color = "var(--danger)";
+        return;
+    }
+
+    // 2. Sanitize Username (Remove spaces, lowercase)
+    const cleanUsername = rawUsername.trim().toLowerCase().replace(/\s/g, '');
+    
+    // 3. Construct "Fake" Email for Supabase
+    const email = `${cleanUsername}${FAKE_DOMAIN}`;
 
     status.innerText = "PROCESSING...";
     status.classList.remove('blink');
 
-    if (isLoginMode) {
-        // --- LOGIN LOGIC ---
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) {
-            status.innerText = `ERROR: ${error.message}`;
-            status.style.color = "var(--danger)";
-        } else {
+    try {
+        if (isLoginMode) {
+            // LOGIN
+            const { data, error } = await supabase.auth.signInWithPassword({ 
+                email: email, 
+                password: password 
+            });
+            
+            if (error) throw error;
+
             status.innerText = "ACCESS GRANTED.";
             status.style.color = "var(--success)";
+            setTimeout(() => window.location.reload(), 500);
+
+        } else {
+            // REGISTER
+            // We store the original 'cleanUsername' in metadata so it displays correctly in the app
+            const { data, error } = await supabase.auth.signUp({
+                email: email,
+                password: password,
+                options: { 
+                    data: { username: cleanUsername } 
+                }
+            });
+
+            if (error) throw error;
+
+            status.innerText = "NODE CREATED. LOGGING IN...";
+            status.style.color = "var(--success)";
+            
+            // Auto-login (or reload) usually happens automatically with Supabase session management,
+            // but we can force a reload to trigger the session check.
             setTimeout(() => window.location.reload(), 1000);
         }
-    } else {
-        // --- REGISTER LOGIC ---
-        const username = document.getElementById('username').value;
-        if (!username) {
-            status.innerText = "ERROR: CODENAME REQUIRED";
-            status.style.color = "var(--danger)";
-            return;
-        }
-
-        const { data, error } = await supabase.auth.signUp({
-            email, password, options: { data: { username } }
-        });
-
-        if (error) {
-            status.innerText = `ERROR: ${error.message}`;
-            status.style.color = "var(--danger)";
-        } else {
-            status.innerText = "REGISTRATION SUCCESS. CHECK EMAIL.";
-            status.style.color = "var(--success)";
-        }
+    } catch (err) {
+        // Handle specific error for "User already exists" or "Invalid login"
+        let msg = err.message;
+        if(msg.includes("Invalid login")) msg = "INVALID CREDENTIALS";
+        if(msg.includes("already registered")) msg = "USERNAME TAKEN";
+        
+        status.innerText = `ERROR: ${msg.toUpperCase()}`;
+        status.style.color = "var(--danger)";
     }
 };
 
