@@ -3,110 +3,600 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RiceChat // Term-01</title>
-    <link rel="stylesheet" href="style.css">
-    <!-- Phosphor Icons -->
+    <title>RiceChat // Hive Mind</title>
+    
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        :root {
+            --bg: #1a1b26;
+            --glass: rgba(26, 27, 38, 0.9);
+            --glass-light: rgba(41, 46, 66, 0.6);
+            --border: rgba(122, 162, 247, 0.3);
+            --primary: #7aa2f7;
+            --accent: #bb9af7;
+            --success: #9ece6a;
+            --danger: #f7768e;
+            --text: #c0caf5;
+            --font-mono: 'Courier New', Courier, monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: var(--bg);
+            background-image: radial-gradient(circle at 50% 50%, rgba(122, 162, 247, 0.05) 0%, transparent 50%);
+            color: var(--text);
+            font-family: var(--font-mono);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .glass-panel {
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        /* --- Auth Styles --- */
+        .auth-container { width: 380px; display: flex; flex-direction: column; z-index: 100; }
+        .auth-tabs { display: flex; border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.2); }
+        .tab-btn { flex: 1; background: transparent; border: none; color: var(--text); padding: 15px; cursor: pointer; opacity: 0.6; transition: 0.3s; }
+        .tab-btn.active { opacity: 1; border-bottom: 2px solid var(--primary); background: rgba(122, 162, 247, 0.1); color: var(--primary); }
+        .auth-form { padding: 2rem; }
+        .input-group { margin-bottom: 1rem; }
+        .input-group label { font-size: 0.75rem; color: var(--accent); display: block; margin-bottom: 5px; }
+        input { background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: var(--primary); padding: 10px; width: 100%; outline: none; }
+        input:focus { border-color: var(--accent); }
+        .action-btn { width: 100%; margin-top: 10px; padding: 12px; background: rgba(122, 162, 247, 0.2); border: 1px solid var(--primary); color: var(--primary); cursor: pointer; transition: 0.3s; font-weight: bold; }
+        .action-btn:hover { background: var(--primary); color: var(--bg); }
+        .status-text { margin-top: 15px; font-size: 0.8rem; text-align: center; min-height: 1.2em; }
+
+        /* --- App Layout --- */
+        #app-container { display: flex; width: 95vw; height: 90vh; gap: 1rem; }
+        .sidebar { width: 260px; display: flex; flex-direction: column; padding: 1rem; }
+        .chat-interface { flex: 1; display: flex; flex-direction: column; position: relative; }
+
+        /* Sidebar Items */
+        .widget-clock { border-bottom: 1px dashed var(--border); padding-bottom: 1rem; margin-bottom: 1rem; text-align: center; }
+        .widget-clock h2 { font-size: 1.8rem; color: var(--accent); }
+        
+        .user-list-container { flex: 1; overflow-y: auto; }
+        .list-header { font-size: 0.8rem; color: var(--success); margin-bottom: 0.5rem; text-transform: uppercase; }
+        
+        #user-list li { list-style: none; padding: 10px; cursor: pointer; border-left: 2px solid transparent; transition: 0.2s; display: flex; align-items: center; gap: 10px; }
+        #user-list li:hover { background: rgba(255,255,255,0.05); }
+        #user-list li.active { background: var(--glass-light); border-left: 2px solid var(--primary); color: var(--primary); }
+        
+        /* Special Styling for Global Room */
+        .global-room-item { border-bottom: 1px dashed var(--border) !important; margin-bottom: 10px; color: var(--accent) !important; font-weight: bold; }
+        .global-room-item i { font-size: 1.2rem; }
+
+        .my-profile { margin-top: auto; padding-top: 1rem; border-top: 1px dashed var(--border); display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; }
+
+        /* Chat Area */
+        .chat-header { padding: 1rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; height: 60px; }
+        .header-controls { display: flex; gap: 10px; }
+        .icon-btn { background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--text); width: 35px; height: 35px; border-radius: 4px; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: 0.2s; }
+        .icon-btn:hover { border-color: var(--primary); color: var(--primary); }
+        .icon-btn.active-call { background: var(--danger); color: white; border-color: var(--danger); animation: pulse 2s infinite; }
+
+        .messages-area { flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 0.5rem; }
+        .msg { max-width: 70%; padding: 8px 12px; border-radius: 4px; font-size: 0.9rem; word-break: break-word; }
+        .msg.sent { align-self: flex-end; background: rgba(122, 162, 247, 0.2); border: 1px solid var(--primary); }
+        .msg.received { align-self: flex-start; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border); }
+        .msg-sender { font-size: 0.7rem; color: var(--accent); display: block; margin-bottom: 2px; }
+
+        .chat-input-area { padding: 1rem; display: flex; gap: 0.5rem; }
+
+        /* --- Video Grid (Group Call) --- */
+        .call-panel {
+            position: absolute; top: 60px; left: 0; width: 100%; height: calc(100% - 60px);
+            background: rgba(0,0,0,0.9); z-index: 50; display: flex; flex-direction: column;
+        }
+        
+        .video-grid-container {
+            flex: 1; padding: 1rem; display: grid; gap: 1rem;
+            /* Auto-fit magic for grid */
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            align-content: center;
+        }
+
+        .video-card { position: relative; background: #000; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; aspect-ratio: 16/9; }
+        .video-card video { width: 100%; height: 100%; object-fit: cover; }
+        .video-label { position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.7); padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }
+
+        .call-controls-bar {
+            height: 70px; display: flex; justify-content: center; align-items: center; gap: 20px;
+            background: var(--glass); border-top: 1px solid var(--border);
+        }
+        .call-btn { width: 50px; height: 50px; border-radius: 50%; font-size: 1.2rem; border: none; cursor: pointer; color: white; transition: 0.2s; }
+        .btn-mute { background: #333; }
+        .btn-end { background: var(--danger); }
+        .btn-end:hover { box-shadow: 0 0 15px var(--danger); }
+
+        /* Utils */
+        .hidden { display: none !important; }
+        .terminal-header { display: flex; gap: 5px; margin-bottom: 10px; padding: 5px; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; }
+        .red { background: var(--danger); } .yellow { background: #e0af68; } .green { background: var(--success); }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(247, 118, 142, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(247, 118, 142, 0); } 100% { box-shadow: 0 0 0 0 rgba(247, 118, 142, 0); } }
+
+        @media (max-width: 768px) {
+            #app-container { flex-direction: column; height: 100vh; width: 100vw; border: none; }
+            .sidebar { width: 100%; height: 200px; flex-direction: row; overflow-x: auto; }
+            .video-grid-container { grid-template-columns: 1fr; }
+        }
+    </style>
 </head>
 <body>
 
-<!-- Login/Register Screen -->
+    <!-- AUTH SCREEN -->
     <div id="auth-screen" class="glass-panel auth-container">
         <div class="terminal-header">
             <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
-            <span>SECURE_GATEWAY // V.2.1</span>
+            <span>RICE_NET // AUTH</span>
         </div>
-
-        <!-- Auth Tabs -->
         <div class="auth-tabs">
-            <button id="tab-login" class="tab-btn active" onclick="switchAuthMode('login')">
-                <i class="ph ph-sign-in"></i> LOGIN
-            </button>
-            <button id="tab-register" class="tab-btn" onclick="switchAuthMode('register')">
-                <i class="ph ph-user-plus"></i> REGISTER
-            </button>
+            <button id="tab-login" class="tab-btn active" onclick="switchAuthMode('login')">LOGIN</button>
+            <button id="tab-register" class="tab-btn" onclick="switchAuthMode('register')">REGISTER</button>
         </div>
-
         <div class="auth-form">
             <div class="input-group">
-                <label>>> CODENAME (USERNAME)</label>
-                <!-- Changed type to text, removed email input -->
-                <input type="text" id="auth-username" placeholder="e.g. NEO_01" autocomplete="off">
+                <label>>> CODENAME</label>
+                <input type="text" id="auth-username" placeholder="NEO_01" autocomplete="off">
             </div>
-
             <div class="input-group">
                 <label>>> PASSCODE</label>
                 <input type="password" id="password" placeholder="******" autocomplete="off">
             </div>
-
-            <button onclick="handleAuthAction()" id="auth-action-btn" class="action-btn">
-                :: INITIALIZE_SESSION
-            </button>
-            
-            <div id="auth-status" class="status-text blink">WAITING FOR INPUT...</div>
+            <button onclick="handleAuthAction()" id="auth-action-btn" class="action-btn">:: INITIALIZE</button>
+            <div id="auth-status" class="status-text">WAITING...</div>
         </div>
     </div>
-    <!-- Main App -->
+
+    <!-- MAIN APP -->
     <div id="app-container" class="hidden">
-        
-        <!-- Sidebar -->
         <aside class="glass-panel sidebar">
             <div class="widget-clock">
-                <h2 id="clock">00:00:00</h2>
-                <small id="date">YYYY-MM-DD</small>
+                <h2 id="clock">00:00</h2>
+                <small id="date">LOADING...</small>
             </div>
-            
             <div class="user-list-container">
-                <h3>>> ONLINE NODES</h3>
+                <h3 class="list-header">>> CHANNELS</h3>
                 <ul id="user-list">
-                    <!-- Users injected here -->
+                    <!-- Global Room injected first, then users -->
                 </ul>
             </div>
-            
             <div class="my-profile">
-                <span id="my-username">UNKNOWN</span>
-                <button onclick="handleLogout()" class="icon-btn"><i class="ph ph-sign-out"></i></button>
+                <span id="my-username">LOADING...</span>
+                <button onclick="handleLogout()" class="icon-btn" title="Logout"><i class="ph ph-sign-out"></i></button>
             </div>
         </aside>
 
-        <!-- Chat Area -->
         <main class="glass-panel chat-interface">
             <div class="chat-header">
-                <span id="chat-with">SELECT A NODE</span>
+                <span id="chat-with">SELECT A CHANNEL</span>
                 <div class="header-controls hidden" id="call-controls">
-                    <button onclick="startCall('audio')" class="icon-btn"><i class="ph ph-phone"></i></button>
-                    <button onclick="startCall('video')" class="icon-btn"><i class="ph ph-video-camera"></i></button>
+                    <button onclick="startGroupCall(false)" class="icon-btn" title="Join Voice"><i class="ph ph-microphone"></i></button>
+                    <button onclick="startGroupCall(true)" class="icon-btn" title="Join Video"><i class="ph ph-video-camera"></i></button>
                 </div>
             </div>
             
-            <div id="messages-area" class="messages-area">
-                <!-- Messages injected here -->
-            </div>
+            <div id="messages-area" class="messages-area"></div>
 
             <div class="chat-input-area">
                 <input type="text" id="msg-input" placeholder="Enter command..." disabled>
-                <button onclick="sendMessage()" id="send-btn" disabled><i class="ph ph-paper-plane-right"></i></button>
+                <button onclick="sendMessage()" id="send-btn" class="action-btn" style="width: 60px; margin:0;" disabled><i class="ph ph-paper-plane-right"></i></button>
+            </div>
+
+            <!-- Group Call Overlay (Initially Hidden) -->
+            <div id="call-panel" class="call-panel hidden">
+                <div class="video-grid-container" id="video-grid">
+                    <!-- Video Cards Injected Here -->
+                </div>
+                <div class="call-controls-bar">
+                    <button onclick="toggleMute()" class="call-btn btn-mute"><i class="ph ph-microphone"></i></button>
+                    <button onclick="leaveGroupCall()" class="call-btn btn-end"><i class="ph ph-phone-slash"></i></button>
+                </div>
             </div>
         </main>
     </div>
 
-    <!-- Call Modal / Overlay -->
-    <div id="call-modal" class="glass-overlay hidden">
-        <div class="glass-panel call-box">
-            <h2 id="call-status">INCOMING TRANSMISSION...</h2>
-            <div class="video-grid">
-                <video id="local-video" autoplay muted playsinline></video>
-                <video id="remote-video" autoplay playsinline></video>
-            </div>
-            <div class="call-actions">
-                <button id="accept-btn" class="green-glow hidden"><i class="ph ph-phone"></i> ACCEPT</button>
-                <button onclick="endCall()" class="red-glow"><i class="ph ph-phone-slash"></i> TERMINATE</button>
-            </div>
-        </div>
-    </div>
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
-    <script type="module" src="script.js"></script>
+        // ============================================
+        // 🛑 CONFIG - ADD YOUR CREDENTIALS HERE 🛑
+        // ============================================
+        const SUPABASE_URL = 'https://ueswgpkqqymgylhdjhek.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVlc3dncGtxcXltZ3lsaGRqaGVrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkwMzg3MDAsImV4cCI6MjA4NDYxNDcwMH0.kBDpfxQ3_pDE_CxdXlXVJQdGrR-5EQlc8yq9xO5932E';
+        // ============================================
+
+        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const FAKE_DOMAIN = "@rice.com"; 
+
+        // State
+        let currentUser = null;
+        let currentRoom = null; // { id: 'GLOBAL' } or { id: uuid, username: string }
+        let isLoginMode = true;
+        let isGlobal = false;
+
+        // WebRTC Mesh State
+        let localStream = null;
+        let peers = {}; // Object to store connection per user: { userId: RTCPeerConnection }
+        let callChannel = null;
+        const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+        
+        // Audio
+        const audioMsg = new Audio('message.mp3');
+        const audioRing = new Audio('call.mp3');
+        audioRing.loop = true;
+
+        // --- AUTH & INIT ---
+        supabase.auth.onAuthStateChange(async (event, session) => {
+            if (session) {
+                currentUser = session.user;
+                document.getElementById('auth-screen').classList.add('hidden');
+                document.getElementById('app-container').classList.remove('hidden');
+                document.getElementById('my-username').innerText = (currentUser.user_metadata.username || 'USER').toUpperCase();
+                initApp();
+            } else {
+                currentUser = null;
+                document.getElementById('auth-screen').classList.remove('hidden');
+                document.getElementById('app-container').classList.add('hidden');
+            }
+        });
+
+        // --- AUTH UI HANDLERS ---
+        window.switchAuthMode = (mode) => {
+            isLoginMode = (mode === 'login');
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`tab-${mode}`).classList.add('active');
+            document.getElementById('auth-action-btn').innerText = isLoginMode ? ':: INITIALIZE' : ':: CREATE NODE';
+        };
+
+        window.handleAuthAction = async () => {
+            const user = document.getElementById('auth-username').value.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+            const pass = document.getElementById('password').value;
+            const status = document.getElementById('auth-status');
+            
+            if(!user || !pass) return status.innerText = "ERROR: INPUT MISSING";
+            
+            const email = user + FAKE_DOMAIN;
+            status.innerText = "PROCESSING...";
+
+            try {
+                if (isLoginMode) {
+                    const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
+                    if(error) throw error;
+                } else {
+                    const { error } = await supabase.auth.signUp({ 
+                        email, password: pass, options: { data: { username: document.getElementById('auth-username').value } } 
+                    });
+                    if(error) throw error;
+                    status.innerText = "NODE CREATED. LOGGING IN...";
+                }
+            } catch (err) {
+                status.innerText = "ERROR: " + err.message.toUpperCase();
+            }
+        };
+
+        window.handleLogout = () => supabase.auth.signOut();
+
+        // --- APP LOGIC ---
+        async function initApp() {
+            startClock();
+            loadUserList();
+            
+            // Listen for new users globally
+            supabase.channel('public:profiles').on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, loadUserList).subscribe();
+        }
+
+        async function loadUserList() {
+            const list = document.getElementById('user-list');
+            list.innerHTML = '';
+
+            // 1. Add Global Room
+            const globalLi = document.createElement('li');
+            globalLi.className = 'global-room-item';
+            globalLi.innerHTML = `<i class="ph ph-globe"></i> GLOBAL NET`;
+            globalLi.onclick = () => selectRoom('GLOBAL');
+            list.appendChild(globalLi);
+
+            // 2. Add Users
+            const { data: profiles } = await supabase.from('profiles').select('*').neq('id', currentUser.id);
+            profiles.forEach(p => {
+                const li = document.createElement('li');
+                li.innerHTML = `<i class="ph ph-user"></i> ${p.username}`;
+                li.onclick = () => selectRoom(p);
+                li.id = `user-${p.id}`;
+                list.appendChild(li);
+            });
+
+            // Auto-select global on load if nothing selected
+            if(!currentRoom) selectRoom('GLOBAL');
+        }
+
+        async function selectRoom(target) {
+            currentRoom = target;
+            isGlobal = (target === 'GLOBAL');
+            
+            // UI Updates
+            document.querySelectorAll('li').forEach(l => l.classList.remove('active'));
+            if(isGlobal) {
+                document.querySelector('.global-room-item').classList.add('active');
+                document.getElementById('chat-with').innerText = "CONNECTED TO: GLOBAL NET";
+            } else {
+                const el = document.getElementById(`user-${target.id}`);
+                if(el) el.classList.add('active');
+                document.getElementById('chat-with').innerText = `ENCRYPTED LINK: ${target.username.toUpperCase()}`;
+            }
+
+            document.getElementById('msg-input').disabled = false;
+            document.getElementById('send-btn').disabled = false;
+            
+            // Enable Call Buttons (logic differs for global vs p2p, but buttons same for now)
+            document.getElementById('call-controls').classList.remove('hidden');
+
+            loadMessages();
+            setupRealtimeChat();
+        }
+
+        // --- MESSAGING ---
+        let messageSubscription = null;
+
+        async function loadMessages() {
+            const area = document.getElementById('messages-area');
+            area.innerHTML = '';
+            let query;
+
+            if(isGlobal) {
+                query = supabase.from('global_messages').select('*').order('created_at', { ascending: true }).limit(50);
+            } else {
+                query = supabase.from('messages').select('*')
+                    .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${currentRoom.id}),and(sender_id.eq.${currentRoom.id},receiver_id.eq.${currentUser.id})`)
+                    .order('created_at', { ascending: true });
+            }
+
+            const { data } = await query;
+            if(data) data.forEach(displayMessage);
+        }
+
+        function setupRealtimeChat() {
+            if(messageSubscription) supabase.removeChannel(messageSubscription);
+
+            const table = isGlobal ? 'global_messages' : 'messages';
+            
+            messageSubscription = supabase.channel(`chat:${isGlobal ? 'global' : currentRoom.id}`)
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: table }, payload => {
+                    const msg = payload.new;
+                    // Filter logic
+                    if (isGlobal) {
+                        displayMessage(msg);
+                    } else if (currentRoom.id && (
+                        (msg.sender_id === currentRoom.id && msg.receiver_id === currentUser.id) || 
+                        (msg.sender_id === currentUser.id && msg.receiver_id === currentRoom.id)
+                    )) {
+                        displayMessage(msg);
+                    }
+                    
+                    if(msg.sender_id !== currentUser.id) audioMsg.play().catch(()=>{});
+                })
+                .subscribe();
+        }
+
+        window.sendMessage = async () => {
+            const input = document.getElementById('msg-input');
+            const content = input.value;
+            if(!content) return;
+
+            if (isGlobal) {
+                await supabase.from('global_messages').insert({
+                    content, 
+                    sender_id: currentUser.id,
+                    username: currentUser.user_metadata.username
+                });
+            } else {
+                await supabase.from('messages').insert({
+                    content,
+                    sender_id: currentUser.id,
+                    receiver_id: currentRoom.id
+                });
+            }
+            input.value = '';
+        };
+
+        function displayMessage(msg) {
+            const area = document.getElementById('messages-area');
+            const div = document.createElement('div');
+            const isMe = msg.sender_id === currentUser.id;
+            
+            div.className = `msg ${isMe ? 'sent' : 'received'}`;
+            // For global chat, show who sent it
+            let senderName = "";
+            if(isGlobal && !isMe) {
+                senderName = `<span class="msg-sender">${msg.username || 'UNKNOWN_NODE'}</span>`;
+            }
+            
+            div.innerHTML = `${senderName}${msg.content}`;
+            area.appendChild(div);
+            area.scrollTop = area.scrollHeight;
+        }
+
+        // --- GROUP CALLING (MESH TOPOLOGY) ---
+        // This logic handles both 1-on-1 (viewed as a group of 2) and Global calls
+        
+        window.startGroupCall = async (videoEnabled) => {
+            document.getElementById('call-panel').classList.remove('hidden');
+            
+            // 1. Get Local Stream
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: videoEnabled });
+                addVideoTile(currentUser.id, localStream, true); // Muted because it's us
+            } catch (e) {
+                alert("Camera Access Denied");
+                return leaveGroupCall();
+            }
+
+            // 2. Subscribe to Signaling Channel
+            const channelId = isGlobal ? 'global-call' : `call:${[currentUser.id, currentRoom.id].sort().join('-')}`;
+            
+            if(callChannel) supabase.removeChannel(callChannel);
+            
+            callChannel = supabase.channel(channelId)
+                .on('broadcast', { event: 'signal' }, handleSignal)
+                .subscribe(async (status) => {
+                    if (status === 'SUBSCRIBED') {
+                        // Announce presence to others
+                        await sendSignal(channelId, 'join-request', {});
+                    }
+                });
+        };
+
+        window.leaveGroupCall = async () => {
+            document.getElementById('call-panel').classList.add('hidden');
+            document.getElementById('video-grid').innerHTML = '';
+            
+            // Stop tracks
+            if(localStream) localStream.getTracks().forEach(t => t.stop());
+            
+            // Close all peer connections
+            Object.values(peers).forEach(p => p.close());
+            peers = {};
+            
+            if(callChannel) {
+                await callChannel.unsubscribe();
+                callChannel = null;
+            }
+        };
+
+        window.toggleMute = () => {
+            if(localStream) {
+                const audioTrack = localStream.getAudioTracks()[0];
+                audioTrack.enabled = !audioTrack.enabled;
+            }
+        };
+
+        async function sendSignal(channelId, type, data, toUserId = null) {
+            await callChannel.send({
+                type: 'broadcast',
+                event: 'signal',
+                payload: { type, data, from: currentUser.id, to: toUserId }
+            });
+        }
+
+        async function handleSignal({ payload }) {
+            const { type, data, from, to } = payload;
+            if (from === currentUser.id) return; // Ignore own signals
+            if (to && to !== currentUser.id) return; // Ignore signals meant for others in the room
+
+            switch (type) {
+                case 'join-request':
+                    // Someone new joined. Create an offer for them.
+                    createPeerConnection(from, true);
+                    break;
+                case 'offer':
+                    // Received offer. Answer it.
+                    createPeerConnection(from, false);
+                    const pc = peers[from];
+                    await pc.setRemoteDescription(new RTCSessionDescription(data));
+                    const answer = await pc.createAnswer();
+                    await pc.setLocalDescription(answer);
+                    sendSignal(callChannel.topic, 'answer', answer, from);
+                    break;
+                case 'answer':
+                    // Received answer to my offer.
+                    if(peers[from]) await peers[from].setRemoteDescription(new RTCSessionDescription(data));
+                    break;
+                case 'ice-candidate':
+                    if(peers[from]) await peers[from].addIceCandidate(new RTCIceCandidate(data));
+                    break;
+            }
+        }
+
+        function createPeerConnection(remoteUserId, isInitiator) {
+            if (peers[remoteUserId]) return; // Already connected
+
+            const pc = new RTCPeerConnection(rtcConfig);
+            peers[remoteUserId] = pc;
+
+            // Add local tracks
+            localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+
+            // Handle ICE
+            pc.onicecandidate = (event) => {
+                if(event.candidate) {
+                    sendSignal(callChannel.topic, 'ice-candidate', event.candidate, remoteUserId);
+                }
+            };
+
+            // Handle Remote Stream
+            pc.ontrack = (event) => {
+                addVideoTile(remoteUserId, event.streams[0], false);
+            };
+            
+            // Cleanup on disconnect
+            pc.onconnectionstatechange = () => {
+                if(pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
+                    removeVideoTile(remoteUserId);
+                    pc.close();
+                    delete peers[remoteUserId];
+                }
+            }
+
+            if (isInitiator) {
+                // Create Offer
+                pc.createOffer().then(offer => {
+                    pc.setLocalDescription(offer);
+                    sendSignal(callChannel.topic, 'offer', offer, remoteUserId);
+                });
+            }
+        }
+
+        function addVideoTile(userId, stream, isLocal) {
+            const grid = document.getElementById('video-grid');
+            const existing = document.getElementById(`video-${userId}`);
+            if(existing) return;
+
+            const card = document.createElement('div');
+            card.className = 'video-card';
+            card.id = `video-${userId}`;
+            
+            const video = document.createElement('video');
+            video.autoplay = true;
+            video.playsInline = true;
+            if(isLocal) video.muted = true;
+            video.srcObject = stream;
+
+            const label = document.createElement('div');
+            label.className = 'video-label';
+            label.innerText = isLocal ? "YOU" : "NODE_" + userId.slice(0,4).toUpperCase();
+
+            card.appendChild(video);
+            card.appendChild(label);
+            grid.appendChild(card);
+        }
+
+        function removeVideoTile(userId) {
+            const card = document.getElementById(`video-${userId}`);
+            if(card) card.remove();
+        }
+
+        // --- CLOCK ---
+        function startClock() {
+            setInterval(() => {
+                const now = new Date();
+                document.getElementById('clock').innerText = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                document.getElementById('date').innerText = now.toISOString().split('T')[0];
+            }, 1000);
+        }
+    </script>
 </body>
 </html>
